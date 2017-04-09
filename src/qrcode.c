@@ -139,11 +139,11 @@ static char getModeBits(uint8_t version, uint8_t mode) {
     // hex(int("".join(reversed([('00' + bin(x - 8)[2:])[-3:] for x in [10, 9, 8, 12, 11, 15, 14, 13, 15]])), 2))
     unsigned int modeInfo = 0x7bbb80a;
     
-#if LOCK_VERSION == 0 || LOC_VERSION > 9
+#if LOCK_VERSION == 0 || LOCK_VERSION > 9
     if (version > 9) { modeInfo >>= 9; }
 #endif
     
-#if LOCK_VERSION == 0 || LOC_VERSION > 26
+#if LOCK_VERSION == 0 || LOCK_VERSION > 26
     if (version > 26) { modeInfo >>= 9; }
 #endif
     
