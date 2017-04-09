@@ -29,7 +29,6 @@
  *  See: https://github.com/nayuki/QR-Code-generator/tree/master/cpp
  */
 
-
 #include "qrcode.h"
 
 #include <stdlib.h>
@@ -39,7 +38,7 @@
 
 #if LOCK_VERSION == 0
 
-static const int16_t NUM_ERROR_CORRECTION_CODEWORDS[4][41] = {
+static const uint16_t NUM_ERROR_CORRECTION_CODEWORDS[4][40] = {
     // 1,  2,  3,  4,  5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,   37,   38,   39,   40    Error correction level
     { 10, 16, 26, 36, 48,  64,  72,  88, 110, 130, 150, 176, 198, 216, 240, 280, 308, 338, 364, 416, 442, 476, 504, 560,  588,  644,  700,  728,  784,  812,  868,  924,  980, 1036, 1064, 1120, 1204, 1260, 1316, 1372},  // Medium
     {  7, 10, 15, 20, 26,  36,  40,  48,  60,  72,  80,  96, 104, 120, 132, 144, 168, 180, 196, 224, 224, 252, 270, 300,  312,  336,  360,  390,  420,  450,  480,  510,  540,  570,  570,  600,  630,  660,  720,  750},  // Low
@@ -47,7 +46,7 @@ static const int16_t NUM_ERROR_CORRECTION_CODEWORDS[4][41] = {
     { 13, 22, 36, 52, 72,  96, 108, 132, 160, 192, 224, 260, 288, 320, 360, 408, 448, 504, 546, 600, 644, 690, 750, 810,  870,  952, 1020, 1050, 1140, 1200, 1290, 1350, 1440, 1530, 1590, 1680, 1770, 1860, 1950, 2040},  // Quartile
 };
 
-static const int8_t NUM_ERROR_CORRECTION_BLOCKS[4][41] = {
+static const uint8_t NUM_ERROR_CORRECTION_BLOCKS[4][40] = {
     // Version: (note that index 0 is for padding, and is set to an illegal value)
     // 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40    Error correction level
     {  1, 1, 1, 2, 2, 4, 4, 4, 5, 5,  5,  8,  9,  9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35, 37, 38, 40, 43, 45, 47, 49},  // Medium
@@ -56,6 +55,14 @@ static const int8_t NUM_ERROR_CORRECTION_BLOCKS[4][41] = {
     {  1, 1, 2, 2, 4, 4, 6, 6, 8, 8,  8, 10, 12, 16, 12, 17, 16, 18, 21, 20, 23, 23, 25, 27, 29, 34, 34, 35, 38, 40, 43, 45, 48, 51, 53, 56, 59, 62, 65, 68},  // Quartile
 };
 
+static const uint16_t NUM_RAW_DATA_MODULES[40] = {
+    //  1,   2,   3,   4,    5,    6,    7,    8,    9,   10,   11,   12,   13,   14,   15,   16,   17,
+      208, 359, 567, 807, 1079, 1383, 1568, 1936, 2336, 2768, 3232, 3728, 4256, 4651, 5243, 5867, 6523,
+    //   18,   19,   20,   21,    22,    23,    24,    25,   26,    27,     28,    29,    30,    31,
+       7211, 7931, 8683, 9252, 10068, 10916, 11796, 12708, 13652, 14628, 15371, 16411, 17483, 18587,
+    //    32,    33,    34,    35,    36,    37,    38,    39,    40
+       19723, 20891, 22091, 23008, 24272, 25568, 26896, 28256, 29648
+};
 
 // @TODO: Put other LOCK_VERSIONS here
 #elif LOCK_VERSION == 3
@@ -67,6 +74,8 @@ static const int16_t NUM_ERROR_CORRECTION_CODEWORDS[4] = {
 static const int8_t NUM_ERROR_CORRECTION_BLOCKS[4] = {
     1, 1, 2, 2
 };
+
+static const uint16_t NUM_RAW_DATA_MODULES = 567;
 
 #else
 
@@ -110,17 +119,17 @@ static int8_t getAlphanumeric(char c) {
     return -1;
 }
 
-static bool isAlphanumeric(const char *text) {
-    for (; *text != '\0'; text++) {
-        if (getAlphanumeric(*text) == -1) { return false; }
+static bool isAlphanumeric(const char *text, uint16_t length) {
+    while (length != 0) {
+        if (getAlphanumeric(text[--length]) == -1) { return false; }
     }
     return true;
 }
 
 
-static bool isNumeric(const char *text) {
-    for (; *text != '\0'; text++) {
-        char c = *text;
+static bool isNumeric(const char *text, uint16_t length) {
+    while (length != 0) {
+        char c = text[--length];
         if (c < '0' || c > '9') { return false; }
     }
     return true;
@@ -154,27 +163,11 @@ static char getModeBits(uint8_t version, uint8_t mode) {
 }
 
 
-// Returns the number of raw data modules (bits) available at the given version number.
-// These data modules are used for both user data codewords and error correction codewords.
-// This stateless pure function could be implemented as a 40-entry lookup table.
-// @TODO: Do the lookup table solution
-static int getNumRawDataModules(int ver) {
-    int result = (16 * ver + 128) * ver + 64;
-    if (ver >= 2) {
-        int numAlign = ver / 7 + 2;
-        result -= (25 * numAlign - 10) * numAlign - 55;
-        if (ver >= 7) {
-            result -= 18 * 2;  // Subtract version information
-        }
-    }
-    return result;
-}
-
 #pragma mark - BitBucket
 
 typedef struct BitBucket {
     uint32_t bitOffsetOrWidth;
-    uint32_t capacityBytes;
+    uint16_t capacityBytes;
     uint8_t *data;
 } BitBucket;
 
@@ -189,11 +182,11 @@ void bb_dump(BitBucket *bitBuffer) {
 }
 */
 
-uint32_t bb_getGridSizeBytes(uint8_t size) {
+uint16_t bb_getGridSizeBytes(uint8_t size) {
     return (((size * size) + 7) / 8);
 }
 
-uint32_t bb_getBufferSizeBytes(uint32_t bits) {
+uint16_t bb_getBufferSizeBytes(uint32_t bits) {
     return ((bits + 7) / 8);
 }
 
@@ -213,23 +206,23 @@ void bb_initGrid(BitBucket *bitGrid, uint8_t *data, uint8_t size) {
     memset(data, 0, bitGrid->capacityBytes);
 }
 
-void bb_appendBits(BitBucket *bitBuffer, uint32_t val, int length) {
+void bb_appendBits(BitBucket *bitBuffer, uint32_t val, uint8_t length) {
     uint32_t offset = bitBuffer->bitOffsetOrWidth;
-    for (int i = length - 1; i >= 0; i--, offset++) {
+    for (int8_t i = length - 1; i >= 0; i--, offset++) {
         bitBuffer->data[offset >> 3] |= ((val >> i) & 1) << (7 - (offset & 7));
     }
     bitBuffer->bitOffsetOrWidth = offset;
 }
-
-void bb_setBits(BitBucket *bitBuffer, uint32_t val, int offset, int len) {
-    for (int i = len - 1; i >= 0; i--, offset++) {
+/*
+void bb_setBits(BitBucket *bitBuffer, uint32_t val, int offset, uint8_t length) {
+    for (int8_t i = length - 1; i >= 0; i--, offset++) {
         bitBuffer->data[offset >> 3] |= ((val >> i) & 1) << (7 - (offset & 7));
     }
 }
-
-void bb_setBit(BitBucket *bitGrid, uint32_t x, uint32_t y, bool on) {
+*/
+void bb_setBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool on) {
     uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
-    char mask = 1 << (7 - (offset & 0x07));
+    uint8_t mask = 1 << (7 - (offset & 0x07));
     if (on) {
         bitGrid->data[offset >> 3] |= mask;
     } else {
@@ -237,9 +230,9 @@ void bb_setBit(BitBucket *bitGrid, uint32_t x, uint32_t y, bool on) {
     }
 }
 
-void bb_invertBit(BitBucket *bitGrid, uint32_t x, uint32_t y, bool invert) {
+void bb_invertBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool invert) {
     uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
-    char mask = 1 << (7 - (offset & 0x07));
+    uint8_t mask = 1 << (7 - (offset & 0x07));
     bool on = ((bitGrid->data[offset >> 3] & (1 << (7 - (offset & 0x07)))) != 0);
     if (on ^ invert) {
         bitGrid->data[offset >> 3] |= mask;
@@ -248,7 +241,7 @@ void bb_invertBit(BitBucket *bitGrid, uint32_t x, uint32_t y, bool invert) {
     }
 }
 
-bool bb_getBit(BitBucket *bitGrid, uint32_t x, uint32_t y) {
+bool bb_getBit(BitBucket *bitGrid, uint8_t x, uint8_t y) {
     uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
     return (bitGrid->data[offset >> 3] & (1 << (7 - (offset & 0x07)))) != 0;
 }
@@ -261,10 +254,10 @@ bool bb_getBit(BitBucket *bitGrid, uint32_t x, uint32_t y) {
 // This means it is possible to apply a mask, undo it, and try another mask. Note that a final
 // well-formed QR Code symbol needs exactly one mask applied (not zero, not two, etc.).
 static void applyMask(BitBucket *modules, BitBucket *isFunction, uint8_t mask) {
-    unsigned char size = modules->bitOffsetOrWidth;
+    uint8_t size = modules->bitOffsetOrWidth;
     
-    for (int y = 0; y < size; y++) {
-        for (int x = 0; x < size; x++) {
+    for (uint8_t y = 0; y < size; y++) {
+        for (uint8_t x = 0; x < size; x++) {
             if (bb_getBit(isFunction, x, y)) { continue; }
             
             bool invert = 0;
@@ -283,19 +276,19 @@ static void applyMask(BitBucket *modules, BitBucket *isFunction, uint8_t mask) {
     }
 }
 
-void setFunctionModule(BitBucket *modules, BitBucket *isFunction, int x, int y, bool on) {
+void setFunctionModule(BitBucket *modules, BitBucket *isFunction, uint8_t x, uint8_t y, bool on) {
     bb_setBit(modules, x, y, on);
     bb_setBit(isFunction, x, y, true);
 }
 
 // Draws a 9*9 finder pattern including the border separator, with the center module at (x, y).
-static void drawFinderPattern(BitBucket *modules, BitBucket *isFunction, int x, int y) {
-    int32_t size = modules->bitOffsetOrWidth;
+static void drawFinderPattern(BitBucket *modules, BitBucket *isFunction, uint8_t x, uint8_t y) {
+    uint8_t size = modules->bitOffsetOrWidth;
 
-    for (int i = -4; i <= 4; i++) {
-        for (int j = -4; j <= 4; j++) {
-            int dist = max(abs(i), abs(j));  // Chebyshev/infinity norm
-            int xx = x + j, yy = y + i;
+    for (int8_t i = -4; i <= 4; i++) {
+        for (int8_t j = -4; j <= 4; j++) {
+            uint8_t dist = max(abs(i), abs(j));  // Chebyshev/infinity norm
+            int16_t xx = x + j, yy = y + i;
             if (0 <= xx && xx < size && 0 <= yy && yy < size) {
                 setFunctionModule(modules, isFunction, xx, yy, dist != 2 && dist != 4);
             }
@@ -304,9 +297,9 @@ static void drawFinderPattern(BitBucket *modules, BitBucket *isFunction, int x, 
 }
 
 // Draws a 5*5 alignment pattern, with the center module at (x, y).
-static void drawAlignmentPattern(BitBucket *modules, BitBucket *isFunction, int x, int y) {
-    for (int i = -2; i <= 2; i++) {
-        for (int j = -2; j <= 2; j++) {
+static void drawAlignmentPattern(BitBucket *modules, BitBucket *isFunction, uint8_t x, uint8_t y) {
+    for (int8_t i = -2; i <= 2; i++) {
+        for (int8_t j = -2; j <= 2; j++) {
             setFunctionModule(modules, isFunction, x + j, y + i, max(abs(i), abs(j)) != 1);
         }
     }
@@ -316,11 +309,11 @@ static void drawAlignmentPattern(BitBucket *modules, BitBucket *isFunction, int 
 // based on the given mask and this object's error correction level field.
 static void drawFormatBits(BitBucket *modules, BitBucket *isFunction, uint8_t ecc, uint8_t mask) {
     
-    int32_t size = modules->bitOffsetOrWidth;
+    uint8_t size = modules->bitOffsetOrWidth;
 
     // Calculate error correction code and pack bits
-    int data = ecc << 3 | mask;  // errCorrLvl is uint2, mask is uint3
-    int rem = data;
+    uint32_t data = ecc << 3 | mask;  // errCorrLvl is uint2, mask is uint3
+    uint32_t rem = data;
     for (int i = 0; i < 10; i++) {
         rem = (rem << 1) ^ ((rem >> 9) * 0x537);
     }
@@ -329,7 +322,7 @@ static void drawFormatBits(BitBucket *modules, BitBucket *isFunction, uint8_t ec
     data ^= 0x5412;  // uint15
     
     // Draw first copy
-    for (int i = 0; i <= 5; i++) {
+    for (uint8_t i = 0; i <= 5; i++) {
         setFunctionModule(modules, isFunction, 8, i, ((data >> i) & 1) != 0);
     }
     
@@ -337,16 +330,16 @@ static void drawFormatBits(BitBucket *modules, BitBucket *isFunction, uint8_t ec
     setFunctionModule(modules, isFunction, 8, 8, ((data >> 7) & 1) != 0);
     setFunctionModule(modules, isFunction, 7, 8, ((data >> 8) & 1) != 0);
     
-    for (int i = 9; i < 15; i++) {
+    for (int8_t i = 9; i < 15; i++) {
         setFunctionModule(modules, isFunction, 14 - i, 8, ((data >> i) & 1) != 0);
     }
     
     // Draw second copy
-    for (int i = 0; i <= 7; i++) {
+    for (int8_t i = 0; i <= 7; i++) {
         setFunctionModule(modules, isFunction, size - 1 - i, 8, ((data >> i) & 1) != 0);
     }
     
-    for (int i = 8; i < 15; i++) {
+    for (int8_t i = 8; i < 15; i++) {
         setFunctionModule(modules, isFunction, 8, size - 15 + i, ((data >> i) & 1) != 0);
     }
     
@@ -358,7 +351,7 @@ static void drawFormatBits(BitBucket *modules, BitBucket *isFunction, uint8_t ec
 // based on this object's version field (which only has an effect for 7 <= version <= 40).
 static void drawVersion(BitBucket *modules, BitBucket *isFunction, uint8_t version) {
     
-    int32_t size = modules->bitOffsetOrWidth;
+    int8_t size = modules->bitOffsetOrWidth;
 
 #if LOCK_VERSION != 0 && LOCK_VERSION < 7
     return;
@@ -367,17 +360,17 @@ static void drawVersion(BitBucket *modules, BitBucket *isFunction, uint8_t versi
     if (version < 7) { return; }
     
     // Calculate error correction code and pack bits
-    int rem = version;  // version is uint6, in the range [7, 40]
-    for (int i = 0; i < 12; i++) {
+    uint32_t rem = version;  // version is uint6, in the range [7, 40]
+    for (uint8_t i = 0; i < 12; i++) {
         rem = (rem << 1) ^ ((rem >> 11) * 0x1F25);
     }
     
-    int data = version << 12 | rem;  // uint18
+    uint32_t data = version << 12 | rem;  // uint18
     
     // Draw two copies
-    for (int i = 0; i < 18; i++) {
+    for (uint8_t i = 0; i < 18; i++) {
         bool bit = ((data >> i) & 1) != 0;
-        int a = size - 11 + i % 3, b = i / 3;
+        uint8_t a = size - 11 + i % 3, b = i / 3;
         setFunctionModule(modules, isFunction, a, b, bit);
         setFunctionModule(modules, isFunction, b, a, bit);
     }
@@ -387,10 +380,10 @@ static void drawVersion(BitBucket *modules, BitBucket *isFunction, uint8_t versi
 
 static void drawFunctionPatterns(BitBucket *modules, BitBucket *isFunction, uint8_t version, uint8_t ecc) {
     
-    int32_t size = modules->bitOffsetOrWidth;
+    uint8_t size = modules->bitOffsetOrWidth;
 
     // Draw the horizontal and vertical timing patterns
-    for (int i = 0; i < size; i++) {
+    for (uint8_t i = 0; i < size; i++) {
         setFunctionModule(modules, isFunction, 6, i, i % 2 == 0);
         setFunctionModule(modules, isFunction, i, 6, i % 2 == 0);
     }
@@ -406,8 +399,8 @@ static void drawFunctionPatterns(BitBucket *modules, BitBucket *isFunction, uint
 
         // Draw the numerous alignment patterns
         
-        int alignCount = version / 7 + 2;
-        int step;
+        uint8_t alignCount = version / 7 + 2;
+        uint8_t step;
         if (version != 32) {
             step = (version * 4 + alignCount * 2 + 1) / (2 * alignCount - 2) * 2;  // ceil((size - 13) / (2*numAlign - 2)) * 2
         } else { // C-C-C-Combo breaker!
@@ -419,13 +412,13 @@ static void drawFunctionPatterns(BitBucket *modules, BitBucket *isFunction, uint
         
         alignPosition[0] = 6;
         
-        int size = version * 4 + 17;
-        for (int i = 0, pos = size - 7; i < alignCount - 1; i++, pos -= step) {
+        uint8_t size = version * 4 + 17;
+        for (uint8_t i = 0, pos = size - 7; i < alignCount - 1; i++, pos -= step) {
             alignPosition[alignPositionIndex--] = pos;
         }
         
-        for (int i = 0; i < alignCount; i++) {
-            for (int j = 0; j < alignCount; j++) {
+        for (uint8_t i = 0; i < alignCount; i++) {
+            for (uint8_t j = 0; j < alignCount; j++) {
                 if ((i == 0 && j == 0) || (i == 0 && j == alignCount - 1) || (i == alignCount - 1 && j == 0)) {
                     continue;  // Skip the three finder corners
                 } else {
@@ -447,23 +440,23 @@ static void drawFunctionPatterns(BitBucket *modules, BitBucket *isFunction, uint
 // data area of this QR Code symbol. Function modules need to be marked off before this is called.
 static void drawCodewords(BitBucket *modules, BitBucket *isFunction, BitBucket *codewords) {
     
-    int bitLength = codewords->bitOffsetOrWidth;
+    uint32_t bitLength = codewords->bitOffsetOrWidth;
     uint8_t *data = codewords->data;
     
-    int32_t size = modules->bitOffsetOrWidth;
+    uint8_t size = modules->bitOffsetOrWidth;
     
     // Bit index into the data
-    size_t i = 0;
+    uint32_t i = 0;
     
     // Do the funny zigzag scan
-    for (int right = size - 1; right >= 1; right -= 2) {  // Index of right column in each column pair
+    for (int16_t right = size - 1; right >= 1; right -= 2) {  // Index of right column in each column pair
         if (right == 6) { right = 5; }
         
-        for (int vert = 0; vert < size; vert++) {  // Vertical counter
+        for (uint8_t vert = 0; vert < size; vert++) {  // Vertical counter
             for (int j = 0; j < 2; j++) {
-                int x = right - j;  // Actual x coordinate
+                uint8_t x = right - j;  // Actual x coordinate
                 bool upwards = ((right & 2) == 0) ^ (x < 6);
-                int y = upwards ? size - 1 - vert : vert;  // Actual y coordinate
+                uint8_t y = upwards ? size - 1 - vert : vert;  // Actual y coordinate
                 if (!bb_getBit(isFunction, x, y) && i < bitLength) {
                     bb_setBit(modules, x, y, ((data[i >> 3] >> (7 - (i & 7))) & 1) != 0);
                     i++;
@@ -486,16 +479,17 @@ static void drawCodewords(BitBucket *modules, BitBucket *isFunction, BitBucket *
 
 // Calculates and returns the penalty score based on state of this QR Code's current modules.
 // This is used by the automatic mask choice algorithm to find the mask pattern that yields the lowest score.
-static int getPenaltyScore(BitBucket *modules) {
-    int result = 0;
+// @TODO: There is likely some optimizations we can make here, since memory access is slow on AVR
+static uint32_t getPenaltyScore(BitBucket *modules) {
+    uint32_t result = 0;
     
-    unsigned char size = modules->bitOffsetOrWidth;
+    uint8_t size = modules->bitOffsetOrWidth;
     
     // Adjacent modules in row having same color
-    for (int y = 0; y < size; y++) {
+    for (uint8_t y = 0; y < size; y++) {
         
         bool colorX = bb_getBit(modules, 0, y);
-        for (int x = 1, runX = 1; x < size; x++) {
+        for (uint8_t x = 1, runX = 1; x < size; x++) {
             bool cx = bb_getBit(modules, x, y);
             if (cx != colorX) {
                 colorX = cx;
@@ -513,9 +507,9 @@ static int getPenaltyScore(BitBucket *modules) {
     }
     
     // Adjacent modules in column having same color
-    for (int x = 0; x < size; x++) {
+    for (uint8_t x = 0; x < size; x++) {
         bool colorY = bb_getBit(modules, x, 0);
-        for (int y = 1, runY = 1; y < size; y++) {
+        for (uint8_t y = 1, runY = 1; y < size; y++) {
             bool cy = bb_getBit(modules, x, y);
             if (cy != colorY) {
                 colorY = cy;
@@ -532,8 +526,8 @@ static int getPenaltyScore(BitBucket *modules) {
     }
     
     // 2*2 blocks of modules having same color
-    for (int y = 0; y < size - 1; y++) {
-        for (int x = 0; x < size - 1; x++) {
+    for (uint8_t y = 0; y < size - 1; y++) {
+        for (uint8_t x = 0; x < size - 1; x++) {
             bool  color = bb_getBit(modules, x, y);
             if (color == bb_getBit(modules, x + 1, y) && color == bb_getBit(modules, x, y + 1) && color == bb_getBit(modules, x + 1, y + 1)) {
                 result += PENALTY_N2;
@@ -542,8 +536,9 @@ static int getPenaltyScore(BitBucket *modules) {
     }
     
     // Finder-like pattern in rows
-    for (int y = 0; y < size; y++) {
-        for (int x = 0, bits = 0; x < size; x++) {
+    for (uint8_t y = 0; y < size; y++) {
+        uint16_t bits = 0;
+        for (uint8_t x = 0; x < size; x++) {
             bits = ((bits << 1) & 0x7FF) | (bb_getBit(modules, x, y) ? 1 : 0);
             if (x >= 10 && (bits == 0x05D || bits == 0x5D0)) { // Needs 11 bits accumulated
                 result += PENALTY_N3;
@@ -552,8 +547,9 @@ static int getPenaltyScore(BitBucket *modules) {
     }
     
     // Finder-like pattern in columns
-    for (int x = 0; x < size; x++) {
-        for (int y = 0, bits = 0; y < size; y++) {
+    for (uint8_t x = 0; x < size; x++) {
+        uint16_t bits = 0;
+        for (uint8_t y = 0; y < size; y++) {
             bits = ((bits << 1) & 0x7FF) | (bb_getBit(modules, x, y) ? 1 : 0);
             if (y >= 10 && (bits == 0x05D || bits == 0x5D0)) { // Needs 11 bits accumulated
                 result += PENALTY_N3;
@@ -562,17 +558,18 @@ static int getPenaltyScore(BitBucket *modules) {
     }
     
     // Balance of black and white modules
-    int black = 0;
-    for (int y = 0; y < size; y++) {
-        for (int x = 0; x < size; x++) {
+    uint16_t black = 0;
+    for (uint8_t y = 0; y < size; y++) {
+        for (uint8_t x = 0; x < size; x++) {
             if (bb_getBit(modules, x, y)) {
                 black++;
             }
         }
     }
-    int total = size * size;
+
     // Find smallest k such that (45-5k)% <= dark/total <= (55+5k)%
-    for (int k = 0; black*20 < (9-k)*total || black*20 > (11+k)*total; k++) {
+    uint16_t total = size * size;
+    for (uint16_t k = 0; black * 20 < (9 - k) * total || black * 20 > (11 + k) * total; k++) {
         result += PENALTY_N4;
     }
     
@@ -580,29 +577,30 @@ static int getPenaltyScore(BitBucket *modules) {
 }
 
 
-#pragma mark - ReedSolomonGenerator
+#pragma mark - Reed-Solomon Generator
 
 uint8_t rs_multiply(uint8_t x, uint8_t y) {
     // Russian peasant multiplication
-    int z = 0;
-    for (int i = 7; i >= 0; i--) {
+    // See: https://en.wikipedia.org/wiki/Ancient_Egyptian_multiplication
+    uint16_t z = 0;
+    for (int8_t i = 7; i >= 0; i--) {
         z = (z << 1) ^ ((z >> 7) * 0x11D);
         z ^= ((y >> i) & 1) * x;
     }
     return z;
 }
 
-void rs_init(uint32_t degree, uint8_t *coeff) {
+void rs_init(uint8_t degree, uint8_t *coeff) {
     memset(coeff, 0, degree);
     coeff[degree - 1] = 1;
     
     // Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degree-1}),
     // drop the highest term, and store the rest of the coefficients in order of descending powers.
     // Note that r = 0x02, which is a generator element of this field GF(2^8/0x11D).
-    int root = 1;
-    for (int i = 0; i < degree; i++) {
+    uint16_t root = 1;
+    for (uint8_t i = 0; i < degree; i++) {
         // Multiply the current product by (x - r^i)
-        for (size_t j = 0; j < degree; j++) {
+        for (uint8_t j = 0; j < degree; j++) {
             coeff[j] = rs_multiply(coeff[j], root);
             if (j + 1 < degree) {
                 coeff[j] ^= coeff[j + 1];
@@ -612,20 +610,20 @@ void rs_init(uint32_t degree, uint8_t *coeff) {
     }
 }
 
-void rs_getRemainder(uint32_t degree, uint8_t *coeff, uint8_t *data, int length, uint8_t *result, uint8_t stride) {
+void rs_getRemainder(uint8_t degree, uint8_t *coeff, uint8_t *data, uint8_t length, uint8_t *result, uint8_t stride) {
     // Compute the remainder by performing polynomial division
     
     //for (uint8_t i = 0; i < degree; i++) { result[] = 0; }
     //memset(result, 0, degree);
     
-    for (size_t i = 0; i < length; i++) {
+    for (uint8_t i = 0; i < length; i++) {
         uint8_t factor = data[i] ^ result[0];
         for (uint8_t j = 1; j < degree; j++) {
             result[(j - 1) * stride] = result[j * stride];
         }
         result[(degree - 1) * stride] = 0;
         
-        for (size_t j = 0; j < degree; j++) {
+        for (uint8_t j = 0; j < degree; j++) {
             result[j * stride] ^= rs_multiply(coeff[j], factor);
         }
     }
@@ -635,21 +633,18 @@ void rs_getRemainder(uint32_t degree, uint8_t *coeff, uint8_t *data, int length,
 
 #pragma mark - QrCode
 
-static int8_t encodeDataCodewords(BitBucket *dataCodewords, const uint8_t *text, uint32_t length, uint8_t version) {
-    
-    uint32_t charCount = 0;
+static int8_t encodeDataCodewords(BitBucket *dataCodewords, const uint8_t *text, uint16_t length, uint8_t version) {
     int8_t mode = MODE_BYTE;
     
-    if (isNumeric((char*)text)) {
+    if (isNumeric((char*)text, length)) {
         mode = MODE_NUMERIC;
         bb_appendBits(dataCodewords, 1 << MODE_NUMERIC, 4);
-        bb_appendBits(dataCodewords, 0, getModeBits(version, MODE_NUMERIC));
-        
-        int accumData = 0;
-        int accumCount = 0;
-        for (; *text != '\0'; text++, charCount++) {
-            char c = *text;
-            accumData = accumData * 10 + (c - '0');
+        bb_appendBits(dataCodewords, length, getModeBits(version, MODE_NUMERIC));
+
+        uint16_t accumData = 0;
+        uint8_t accumCount = 0;
+        for (uint16_t i = 0; i < length; i++) {
+            accumData = accumData * 10 + ((char)(text[i]) - '0');
             accumCount++;
             if (accumCount == 3) {
                 bb_appendBits(dataCodewords, accumData, 10);
@@ -663,15 +658,15 @@ static int8_t encodeDataCodewords(BitBucket *dataCodewords, const uint8_t *text,
             bb_appendBits(dataCodewords, accumData, accumCount * 3 + 1);
         }
         
-    } else if (isAlphanumeric((char*)text)) {
+    } else if (isAlphanumeric((char*)text, length)) {
         mode = MODE_ALPHANUMERIC;
         bb_appendBits(dataCodewords, 1 << MODE_ALPHANUMERIC, 4);
-        bb_appendBits(dataCodewords, 0, getModeBits(version, MODE_ALPHANUMERIC));
-        
-        int accumData = 0;
-        int accumCount = 0;
-        for (; *text != '\0'; text++, charCount++) {
-            accumData = accumData * 45 + getAlphanumeric(*text);
+        bb_appendBits(dataCodewords, length, getModeBits(version, MODE_ALPHANUMERIC));
+
+        uint16_t accumData = 0;
+        uint8_t accumCount = 0;
+        for (uint16_t i = 0; i  < length; i++) {
+            accumData = accumData * 45 + getAlphanumeric((char)(text[i]));
             accumCount++;
             if (accumCount == 2) {
                 bb_appendBits(dataCodewords, accumData, 11);
@@ -687,14 +682,13 @@ static int8_t encodeDataCodewords(BitBucket *dataCodewords, const uint8_t *text,
         
     } else {
         bb_appendBits(dataCodewords, 1 << MODE_BYTE, 4);
-        bb_appendBits(dataCodewords, 0, getModeBits(version, MODE_BYTE));
-        for (; *text != '\0'; text++, charCount++) {
-            char c = (*text);
-            bb_appendBits(dataCodewords, c, 8);
+        bb_appendBits(dataCodewords, length, getModeBits(version, MODE_BYTE));
+        for (uint16_t i = 0; i < length; i++) {
+            bb_appendBits(dataCodewords, (char)(text[i]), 8);
         }
     }
     
-    bb_setBits(dataCodewords, charCount, 4, getModeBits(version, mode));
+    //bb_setBits(dataCodewords, length, 4, getModeBits(version, mode));
     
     return mode;
 }
@@ -703,21 +697,21 @@ static void performErrorCorrection(uint8_t version, uint8_t ecc, BitBucket *data
     
     // See: http://www.thonky.com/qr-code-tutorial/structure-final-message
     
-    uint32_t moduleCount = getNumRawDataModules(version);
-    
 #if LOCK_VERSION == 0
-    int numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ecc][version - 1];
-    int totalEcc = NUM_ERROR_CORRECTION_CODEWORDS[ecc][version - 1];
+    uint8_t numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ecc][version - 1];
+    uint16_t totalEcc = NUM_ERROR_CORRECTION_CODEWORDS[ecc][version - 1];
+    uint16_t moduleCount = NUM_RAW_DATA_MODULES[version - 1];
 #else
-    int numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ecc];
-    int totalEcc = NUM_ERROR_CORRECTION_CODEWORDS[ecc];
+    uint8_t numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ecc];
+    uint16_t totalEcc = NUM_ERROR_CORRECTION_CODEWORDS[ecc];
+    uint16_t moduleCount = NUM_RAW_DATA_MODULES;
 #endif
     
-    int blockEccLen = totalEcc / numBlocks;
-    int numShortBlocks = numBlocks - moduleCount / 8 % numBlocks;
-    int shortBlockLen = moduleCount / 8 / numBlocks;
+    uint8_t blockEccLen = totalEcc / numBlocks;
+    uint8_t numShortBlocks = numBlocks - moduleCount / 8 % numBlocks;
+    uint8_t shortBlockLen = moduleCount / 8 / numBlocks;
     
-    uint32_t shortDataBlockLen = shortBlockLen - blockEccLen;
+    uint8_t shortDataBlockLen = shortBlockLen - blockEccLen;
     
     uint8_t result[data->capacityBytes];
     memset(result, 0, sizeof(result));
@@ -725,15 +719,15 @@ static void performErrorCorrection(uint8_t version, uint8_t ecc, BitBucket *data
     uint8_t coeff[blockEccLen];
     rs_init(blockEccLen, coeff);
     
-    uint32_t offset = 0;
+    uint16_t offset = 0;
     uint8_t *dataBytes = data->data;
     
     
     // Interleave all short blocks
-    for (int32_t i = 0; i < shortDataBlockLen; i++) {
-        uint32_t index = i;
-        uint32_t stride = shortDataBlockLen;
-        for (int32_t blockNum = 0; blockNum < numBlocks; blockNum++) {
+    for (uint8_t i = 0; i < shortDataBlockLen; i++) {
+        uint16_t index = i;
+        uint8_t stride = shortDataBlockLen;
+        for (uint8_t blockNum = 0; blockNum < numBlocks; blockNum++) {
             result[offset++] = dataBytes[index];
             
 #if LOCK_VERSION == 0 || LOCK_VERSION >= 5
@@ -747,9 +741,9 @@ static void performErrorCorrection(uint8_t version, uint8_t ecc, BitBucket *data
 #if LOCK_VERSION == 0 || LOCK_VERSION >= 5
     {
         // Interleave long blocks
-        uint32_t index = shortDataBlockLen * (numShortBlocks + 1);
-        uint32_t stride = shortDataBlockLen;
-        for (int32_t blockNum = 0; blockNum < numBlocks - numShortBlocks; blockNum++) {
+        uint16_t index = shortDataBlockLen * (numShortBlocks + 1);
+        uint8_t stride = shortDataBlockLen;
+        for (uint8_t blockNum = 0; blockNum < numBlocks - numShortBlocks; blockNum++) {
             result[offset++] = dataBytes[index];
             
             if (blockNum == 0) { stride++; }
@@ -760,12 +754,11 @@ static void performErrorCorrection(uint8_t version, uint8_t ecc, BitBucket *data
     
     // Add all ecc blocks, interleaved
     uint8_t blockSize = shortDataBlockLen;
-    for (int32_t blockNum = 0; blockNum < numBlocks; blockNum++) {
+    for (uint8_t blockNum = 0; blockNum < numBlocks; blockNum++) {
         
 #if LOCK_VERSION == 0 || LOCK_VERSION >= 5
         if (blockNum == numShortBlocks) { blockSize++; }
 #endif
-        
         rs_getRemainder(blockEccLen, coeff, dataBytes, blockSize, &result[offset + blockNum], numBlocks);
         dataBytes += blockSize;
     }
@@ -781,8 +774,7 @@ static const uint8_t ECC_FORMAT_BITS = (0x02 << 6) | (0x03 << 4) | (0x00 << 2) |
 
 #pragma mark - Public QRCode functions
 
-uint32_t qrcode_getBufferSize(uint8_t version) {
-    //printf("FOO: %d %d\n", bb_getGridSizeBytes(4 * version + 17), getNumRawDataModules(version));
+uint16_t qrcode_getBufferSize(uint8_t version) {
     return bb_getGridSizeBytes(4 * version + 17);
 }
 
@@ -797,12 +789,12 @@ int8_t qrcode_initBytes(QRCode *qrcode, uint8_t *modules, uint8_t version, uint8
     uint8_t eccFormatBits = (ECC_FORMAT_BITS >> (2 * ecc)) & 0x03;
     
 #if LOCK_VERSION == 0
-    uint32_t moduleCount = getNumRawDataModules(version);
-    int dataCapacity = moduleCount / 8 - NUM_ERROR_CORRECTION_CODEWORDS[eccFormatBits][version - 1];
+    uint16_t moduleCount = NUM_RAW_DATA_MODULES[version - 1];
+    uint16_t dataCapacity = moduleCount / 8 - NUM_ERROR_CORRECTION_CODEWORDS[eccFormatBits][version - 1];
 #else
     version = LOCK_VERSION;
-    uint32_t moduleCount = getNumRawDataModules(LOCK_VERSION);
-    int dataCapacity = moduleCount / 8 - NUM_ERROR_CORRECTION_CODEWORDS[eccFormatBits];
+    uint16_t moduleCount = NUM_RAW_DATA_MODULES;
+    uint16_t dataCapacity = moduleCount / 8 - NUM_ERROR_CORRECTION_CODEWORDS[eccFormatBits];
 #endif
     
     struct BitBucket codewords;
@@ -875,6 +867,7 @@ bool qrcode_getModule(QRCode *qrcode, uint8_t x, uint8_t y) {
     uint32_t offset = y * qrcode->size + x;
     return (qrcode->modules[offset >> 3] & (1 << (7 - (offset & 0x07)))) != 0;
 }
+
 /*
 uint8_t qrcode_getHexLength(QRCode *qrcode) {
     return ((qrcode->size * qrcode->size) + 7) / 4;

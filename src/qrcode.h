@@ -78,7 +78,7 @@ extern "C"{
 
 
 
-uint32_t qrcode_getBufferSize(uint8_t version);
+uint16_t qrcode_getBufferSize(uint8_t version);
 
 int8_t qrcode_initText(QRCode *qrcode, uint8_t *modules, uint8_t version, uint8_t ecc, const char *data);
 int8_t qrcode_initBytes(QRCode *qrcode, uint8_t *modules, uint8_t version, uint8_t ecc, uint8_t *data, uint16_t length);
