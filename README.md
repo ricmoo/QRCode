@@ -99,7 +99,6 @@ Data Capacities
         <th>Alphanumeric</th>
         <th>Byte</th>
     </tr>
-
     <tr>
         <td rowspan="4">1</td>
         <td>LOW</td><td>41</td><td>25</td><td>17</td>
@@ -113,7 +112,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>17</td><td>10</td><td>7</td>
     </tr>
-
     <tr>
         <td rowspan="4">2</td>
         <td>LOW</td><td>77</td><td>47</td><td>32</td>
@@ -127,7 +125,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>34</td><td>20</td><td>14</td>
     </tr>
-
     <tr>
         <td rowspan="4">3</td>
         <td>LOW</td><td>127</td><td>77</td><td>53</td>
@@ -141,7 +138,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>58</td><td>35</td><td>24</td>
     </tr>
-
     <tr>
         <td rowspan="4">4</td>
         <td>LOW</td><td>187</td><td>114</td><td>78</td>
@@ -155,7 +151,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>82</td><td>50</td><td>34</td>
     </tr>
-
     <tr>
         <td rowspan="4">5</td>
         <td>LOW</td><td>255</td><td>154</td><td>106</td>
@@ -169,7 +164,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>106</td><td>64</td><td>44</td>
     </tr>
-
     <tr>
         <td rowspan="4">6</td>
         <td>LOW</td><td>322</td><td>195</td><td>134</td>
@@ -183,7 +177,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>139</td><td>84</td><td>58</td>
     </tr>
-
     <tr>
         <td rowspan="4">7</td>
         <td>LOW</td><td>370</td><td>224</td><td>154</td>
@@ -197,7 +190,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>154</td><td>93</td><td>64</td>
     </tr>
-
     <tr>
         <td rowspan="4">8</td>
         <td>LOW</td><td>461</td><td>279</td><td>192</td>
@@ -211,7 +203,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>202</td><td>122</td><td>84</td>
     </tr>
-
     <tr>
         <td rowspan="4">9</td>
         <td>LOW</td><td>552</td><td>335</td><td>230</td>
@@ -225,7 +216,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>235</td><td>143</td><td>98</td>
     </tr>
-
     <tr>
         <td rowspan="4">10</td>
         <td>LOW</td><td>652</td><td>395</td><td>271</td>
@@ -239,7 +229,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>288</td><td>174</td><td>119</td>
     </tr>
-
     <tr>
         <td rowspan="4">11</td>
         <td>LOW</td><td>772</td><td>468</td><td>321</td>
@@ -253,7 +242,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>331</td><td>200</td><td>137</td>
     </tr>
-
     <tr>
         <td rowspan="4">12</td>
         <td>LOW</td><td>883</td><td>535</td><td>367</td>
@@ -267,7 +255,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>374</td><td>227</td><td>155</td>
     </tr>
-
     <tr>
         <td rowspan="4">13</td>
         <td>LOW</td><td>1022</td><td>619</td><td>425</td>
@@ -281,7 +268,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>427</td><td>259</td><td>177</td>
     </tr>
-
     <tr>
         <td rowspan="4">14</td>
         <td>LOW</td><td>1101</td><td>667</td><td>458</td>
@@ -295,7 +281,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>468</td><td>283</td><td>194</td>
     </tr>
-
     <tr>
         <td rowspan="4">15</td>
         <td>LOW</td><td>1250</td><td>758</td><td>520</td>
@@ -309,7 +294,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>530</td><td>321</td><td>220</td>
     </tr>
-
     <tr>
         <td rowspan="4">16</td>
         <td>LOW</td><td>1408</td><td>854</td><td>586</td>
@@ -323,7 +307,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>602</td><td>365</td><td>250</td>
     </tr>
-
     <tr>
         <td rowspan="4">17</td>
         <td>LOW</td><td>1548</td><td>938</td><td>644</td>
@@ -337,7 +320,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>674</td><td>408</td><td>280</td>
     </tr>
-
     <tr>
         <td rowspan="4">18</td>
         <td>LOW</td><td>1725</td><td>1046</td><td>718</td>
@@ -351,7 +333,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>746</td><td>452</td><td>310</td>
     </tr>
-
     <tr>
         <td rowspan="4">19</td>
         <td>LOW</td><td>1903</td><td>1153</td><td>792</td>
@@ -365,7 +346,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>813</td><td>493</td><td>338</td>
     </tr>
-
     <tr>
         <td rowspan="4">20</td>
         <td>LOW</td><td>2061</td><td>1249</td><td>858</td>
@@ -379,7 +359,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>919</td><td>557</td><td>382</td>
     </tr>
-
     <tr>
         <td rowspan="4">21</td>
         <td>LOW</td><td>2232</td><td>1352</td><td>929</td>
@@ -393,7 +372,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>969</td><td>587</td><td>403</td>
     </tr>
-
     <tr>
         <td rowspan="4">22</td>
         <td>LOW</td><td>2409</td><td>1460</td><td>1003</td>
@@ -407,7 +385,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1056</td><td>640</td><td>439</td>
     </tr>
-
     <tr>
         <td rowspan="4">23</td>
         <td>LOW</td><td>2620</td><td>1588</td><td>1091</td>
@@ -421,7 +398,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1108</td><td>672</td><td>461</td>
     </tr>
-
     <tr>
         <td rowspan="4">24</td>
         <td>LOW</td><td>2812</td><td>1704</td><td>1171</td>
@@ -435,7 +411,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1228</td><td>744</td><td>511</td>
     </tr>
-
     <tr>
         <td rowspan="4">25</td>
         <td>LOW</td><td>3057</td><td>1853</td><td>1273</td>
@@ -449,7 +424,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1286</td><td>779</td><td>535</td>
     </tr>
-
     <tr>
         <td rowspan="4">26</td>
         <td>LOW</td><td>3283</td><td>1990</td><td>1367</td>
@@ -463,7 +437,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1425</td><td>864</td><td>593</td>
     </tr>
-
     <tr>
         <td rowspan="4">27</td>
         <td>LOW</td><td>3517</td><td>2132</td><td>1465</td>
@@ -477,7 +450,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1501</td><td>910</td><td>625</td>
     </tr>
-
     <tr>
         <td rowspan="4">28</td>
         <td>LOW</td><td>3669</td><td>2223</td><td>1528</td>
@@ -491,7 +463,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1581</td><td>958</td><td>658</td>
     </tr>
-
     <tr>
         <td rowspan="4">29</td>
         <td>LOW</td><td>3909</td><td>2369</td><td>1628</td>
@@ -505,7 +476,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1677</td><td>1016</td><td>698</td>
     </tr>
-
     <tr>
         <td rowspan="4">30</td>
         <td>LOW</td><td>4158</td><td>2520</td><td>1732</td>
@@ -519,7 +489,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1782</td><td>1080</td><td>742</td>
     </tr>
-
     <tr>
         <td rowspan="4">31</td>
         <td>LOW</td><td>4417</td><td>2677</td><td>1840</td>
@@ -533,7 +502,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>1897</td><td>1150</td><td>790</td>
     </tr>
-
     <tr>
         <td rowspan="4">32</td>
         <td>LOW</td><td>4686</td><td>2840</td><td>1952</td>
@@ -547,7 +515,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2022</td><td>1226</td><td>842</td>
     </tr>
-
     <tr>
         <td rowspan="4">33</td>
         <td>LOW</td><td>4965</td><td>3009</td><td>2068</td>
@@ -561,7 +528,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2157</td><td>1307</td><td>898</td>
     </tr>
-
     <tr>
         <td rowspan="4">34</td>
         <td>LOW</td><td>5253</td><td>3183</td><td>2188</td>
@@ -575,7 +541,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2301</td><td>1394</td><td>958</td>
     </tr>
-
     <tr>
         <td rowspan="4">35</td>
         <td>LOW</td><td>5529</td><td>3351</td><td>2303</td>
@@ -589,7 +554,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2361</td><td>1431</td><td>983</td>
     </tr>
-
     <tr>
         <td rowspan="4">36</td>
         <td>LOW</td><td>5836</td><td>3537</td><td>2431</td>
@@ -603,7 +567,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2524</td><td>1530</td><td>1051</td>
     </tr>
-
     <tr>
         <td rowspan="4">37</td>
         <td>LOW</td><td>6153</td><td>3729</td><td>2563</td>
@@ -617,7 +580,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2625</td><td>1591</td><td>1093</td>
     </tr>
-
     <tr>
         <td rowspan="4">38</td>
         <td>LOW</td><td>6479</td><td>3927</td><td>2699</td>
@@ -631,7 +593,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2735</td><td>1658</td><td>1139</td>
     </tr>
-
     <tr>
         <td rowspan="4">39</td>
         <td>LOW</td><td>6743</td><td>4087</td><td>2809</td>
@@ -645,7 +606,6 @@ Data Capacities
     <tr>
         <td>HIGH</td><td>2927</td><td>1774</td><td>1219</td>
     </tr>
-
     <tr>
         <td rowspan="4">40</td>
         <td>LOW</td><td>7089</td><td>4296</td><td>2953</td>
