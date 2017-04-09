@@ -182,15 +182,15 @@ void bb_dump(BitBucket *bitBuffer) {
 }
 */
 
-uint16_t bb_getGridSizeBytes(uint8_t size) {
+static uint16_t bb_getGridSizeBytes(uint8_t size) {
     return (((size * size) + 7) / 8);
 }
 
-uint16_t bb_getBufferSizeBytes(uint32_t bits) {
+static uint16_t bb_getBufferSizeBytes(uint32_t bits) {
     return ((bits + 7) / 8);
 }
 
-void bb_initBuffer(BitBucket *bitBuffer, uint8_t *data, int32_t capacityBytes) {
+static void bb_initBuffer(BitBucket *bitBuffer, uint8_t *data, int32_t capacityBytes) {
     bitBuffer->bitOffsetOrWidth = 0;
     bitBuffer->capacityBytes = capacityBytes;
     bitBuffer->data = data;
@@ -198,7 +198,7 @@ void bb_initBuffer(BitBucket *bitBuffer, uint8_t *data, int32_t capacityBytes) {
     memset(data, 0, bitBuffer->capacityBytes);
 }
 
-void bb_initGrid(BitBucket *bitGrid, uint8_t *data, uint8_t size) {
+static void bb_initGrid(BitBucket *bitGrid, uint8_t *data, uint8_t size) {
     bitGrid->bitOffsetOrWidth = size;
     bitGrid->capacityBytes = bb_getGridSizeBytes(size);
     bitGrid->data = data;
@@ -206,7 +206,7 @@ void bb_initGrid(BitBucket *bitGrid, uint8_t *data, uint8_t size) {
     memset(data, 0, bitGrid->capacityBytes);
 }
 
-void bb_appendBits(BitBucket *bitBuffer, uint32_t val, uint8_t length) {
+static void bb_appendBits(BitBucket *bitBuffer, uint32_t val, uint8_t length) {
     uint32_t offset = bitBuffer->bitOffsetOrWidth;
     for (int8_t i = length - 1; i >= 0; i--, offset++) {
         bitBuffer->data[offset >> 3] |= ((val >> i) & 1) << (7 - (offset & 7));
@@ -220,7 +220,7 @@ void bb_setBits(BitBucket *bitBuffer, uint32_t val, int offset, uint8_t length) 
     }
 }
 */
-void bb_setBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool on) {
+static void bb_setBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool on) {
     uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
     uint8_t mask = 1 << (7 - (offset & 0x07));
     if (on) {
@@ -230,7 +230,7 @@ void bb_setBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool on) {
     }
 }
 
-void bb_invertBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool invert) {
+static void bb_invertBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool invert) {
     uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
     uint8_t mask = 1 << (7 - (offset & 0x07));
     bool on = ((bitGrid->data[offset >> 3] & (1 << (7 - (offset & 0x07)))) != 0);
@@ -241,7 +241,7 @@ void bb_invertBit(BitBucket *bitGrid, uint8_t x, uint8_t y, bool invert) {
     }
 }
 
-bool bb_getBit(BitBucket *bitGrid, uint8_t x, uint8_t y) {
+static bool bb_getBit(BitBucket *bitGrid, uint8_t x, uint8_t y) {
     uint32_t offset = y * bitGrid->bitOffsetOrWidth + x;
     return (bitGrid->data[offset >> 3] & (1 << (7 - (offset & 0x07)))) != 0;
 }
@@ -276,7 +276,7 @@ static void applyMask(BitBucket *modules, BitBucket *isFunction, uint8_t mask) {
     }
 }
 
-void setFunctionModule(BitBucket *modules, BitBucket *isFunction, uint8_t x, uint8_t y, bool on) {
+static void setFunctionModule(BitBucket *modules, BitBucket *isFunction, uint8_t x, uint8_t y, bool on) {
     bb_setBit(modules, x, y, on);
     bb_setBit(isFunction, x, y, true);
 }
@@ -393,7 +393,7 @@ static void drawFunctionPatterns(BitBucket *modules, BitBucket *isFunction, uint
     drawFinderPattern(modules, isFunction, size - 4, 3);
     drawFinderPattern(modules, isFunction, 3, size - 4);
     
-#if LOCK_VERSION ==0 || LOCK_VERSION > 1
+#if LOCK_VERSION == 0 || LOCK_VERSION > 1
 
     if (version > 1) {
 
@@ -479,7 +479,7 @@ static void drawCodewords(BitBucket *modules, BitBucket *isFunction, BitBucket *
 
 // Calculates and returns the penalty score based on state of this QR Code's current modules.
 // This is used by the automatic mask choice algorithm to find the mask pattern that yields the lowest score.
-// @TODO: There is likely some optimizations we can make here, since memory access is slow on AVR
+// @TODO: This can be optimized by working with the bytes instead of bits.
 static uint32_t getPenaltyScore(BitBucket *modules) {
     uint32_t result = 0;
     
@@ -525,45 +525,38 @@ static uint32_t getPenaltyScore(BitBucket *modules) {
         }
     }
     
-    // 2*2 blocks of modules having same color
-    for (uint8_t y = 0; y < size - 1; y++) {
-        for (uint8_t x = 0; x < size - 1; x++) {
-            bool  color = bb_getBit(modules, x, y);
-            if (color == bb_getBit(modules, x + 1, y) && color == bb_getBit(modules, x, y + 1) && color == bb_getBit(modules, x + 1, y + 1)) {
-                result += PENALTY_N2;
-            }
-        }
-    }
-    
-    // Finder-like pattern in rows
-    for (uint8_t y = 0; y < size; y++) {
-        uint16_t bits = 0;
-        for (uint8_t x = 0; x < size; x++) {
-            bits = ((bits << 1) & 0x7FF) | (bb_getBit(modules, x, y) ? 1 : 0);
-            if (x >= 10 && (bits == 0x05D || bits == 0x5D0)) { // Needs 11 bits accumulated
-                result += PENALTY_N3;
-            }
-        }
-    }
-    
-    // Finder-like pattern in columns
-    for (uint8_t x = 0; x < size; x++) {
-        uint16_t bits = 0;
-        for (uint8_t y = 0; y < size; y++) {
-            bits = ((bits << 1) & 0x7FF) | (bb_getBit(modules, x, y) ? 1 : 0);
-            if (y >= 10 && (bits == 0x05D || bits == 0x5D0)) { // Needs 11 bits accumulated
-                result += PENALTY_N3;
-            }
-        }
-    }
-    
-    // Balance of black and white modules
     uint16_t black = 0;
     for (uint8_t y = 0; y < size; y++) {
+        uint16_t bitsRow = 0, bitsCol = 0;
         for (uint8_t x = 0; x < size; x++) {
-            if (bb_getBit(modules, x, y)) {
-                black++;
+            bool color = bb_getBit(modules, x, y);
+
+            // 2*2 blocks of modules having same color
+            if (x > 0 && y > 0) {
+                bool colorUL = bb_getBit(modules, x - 1, y - 1);
+                bool colorUR = bb_getBit(modules, x, y - 1);
+                bool colorL = bb_getBit(modules, x - 1, y);
+                if (color == colorUL && color == colorUR && color == colorL) {
+                    result += PENALTY_N2;
+                }
             }
+
+            // Finder-like pattern in rows and columns
+            bitsRow = ((bitsRow << 1) & 0x7FF) | color;
+            bitsCol = ((bitsCol << 1) & 0x7FF) | bb_getBit(modules, y, x);
+
+            // Needs 11 bits accumulated
+            if (x >= 10) {
+                if (bitsRow == 0x05D || bitsRow == 0x5D0) {
+                    result += PENALTY_N3;
+                }
+                if (bitsCol == 0x05D || bitsCol == 0x5D0) {
+                    result += PENALTY_N3;
+                }
+            }
+
+            // Balance of black and white modules
+            if (color) { black++; }
         }
     }
 
@@ -579,7 +572,7 @@ static uint32_t getPenaltyScore(BitBucket *modules) {
 
 #pragma mark - Reed-Solomon Generator
 
-uint8_t rs_multiply(uint8_t x, uint8_t y) {
+static uint8_t rs_multiply(uint8_t x, uint8_t y) {
     // Russian peasant multiplication
     // See: https://en.wikipedia.org/wiki/Ancient_Egyptian_multiplication
     uint16_t z = 0;
@@ -590,7 +583,7 @@ uint8_t rs_multiply(uint8_t x, uint8_t y) {
     return z;
 }
 
-void rs_init(uint8_t degree, uint8_t *coeff) {
+static void rs_init(uint8_t degree, uint8_t *coeff) {
     memset(coeff, 0, degree);
     coeff[degree - 1] = 1;
     
@@ -610,7 +603,7 @@ void rs_init(uint8_t degree, uint8_t *coeff) {
     }
 }
 
-void rs_getRemainder(uint8_t degree, uint8_t *coeff, uint8_t *data, uint8_t length, uint8_t *result, uint8_t stride) {
+static void rs_getRemainder(uint8_t degree, uint8_t *coeff, uint8_t *data, uint8_t length, uint8_t *result, uint8_t stride) {
     // Compute the remainder by performing polynomial division
     
     //for (uint8_t i = 0; i < degree; i++) { result[] = 0; }
