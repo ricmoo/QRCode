@@ -26,6 +26,8 @@ int main() {
 
     int total = 0, passed = 0;
     for (char version = 1; version <= 40; version++) {
+        if (LOCK_VERSION != 0 && LOCK_VERSION != version) { continue; }
+
         for (char ecc = 0; ecc < 4; ecc++) {
             const qrcodegen::QrCode::Ecc *errCorLvl;
             switch (ecc) {
