@@ -8,7 +8,7 @@ optimized for processing and memory constrained systems.
 
 - Stack-based (no heap necessary; but you can use heap if you want)
 - Low-memory foot print (relatively)
-- Compile-time stripping of unecessary logic
+- Compile-time stripping of unecessary logic and constants
 - MIT License; do with this as you please
 
 
@@ -666,7 +666,7 @@ Data Capacities
 Special Thanks
 --------------
 
-A HUGE thank you to [nayuki](https://www.nayuki.io/) for the 
+A HUGE thank you to [Project Nayuki](https://www.nayuki.io/) for the
 [QR code C++ library](https://github.com/nayuki/QR-Code-generator/tree/master/cpp)
 which was critical in development of this library.
 
