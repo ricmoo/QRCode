@@ -213,7 +213,9 @@ static void bb_initGrid(BitBucket *bitGrid, uint8_t *data, uint8_t size) {
 static void bb_appendBits(BitBucket *bitBuffer, uint32_t val, uint8_t length) {
     uint32_t offset = bitBuffer->bitOffsetOrWidth;
     for (int8_t i = length - 1; i >= 0; i--, offset++) {
-        bitBuffer->data[offset >> 3] |= ((val >> i) & 1) << (7 - (offset & 7));
+        if (bitBuffer->capacityBytes > offset >> 3) {
+            bitBuffer->data[offset >> 3] |= ((val >> i) & 1) << (7 - (offset & 7));
+        }
     }
     bitBuffer->bitOffsetOrWidth = offset;
 }
@@ -775,7 +777,7 @@ uint16_t qrcode_getBufferSize(uint8_t version) {
     return bb_getGridSizeBytes(4 * version + 17);
 }
 
-// @TODO: Return error if data is too big.
+
 int8_t qrcode_initBytes(QRCode *qrcode, uint8_t *modules, uint8_t version, uint8_t ecc, uint8_t *data, uint16_t length) {
     uint8_t size = version * 4 + 17;
     qrcode->version = version;
@@ -805,7 +807,8 @@ int8_t qrcode_initBytes(QRCode *qrcode, uint8_t *modules, uint8_t version, uint8
     qrcode->mode = mode;
     
     // Add terminator and pad up to a byte if applicable
-    uint32_t padding = (dataCapacity * 8) - codewords.bitOffsetOrWidth;
+    int32_t padding = (dataCapacity * 8) - codewords.bitOffsetOrWidth;
+    if (padding < 0) { return -1; }
     if (padding > 4) { padding = 4; }
     bb_appendBits(&codewords, 0, padding);
     bb_appendBits(&codewords, 0, (8 - codewords.bitOffsetOrWidth % 8) % 8);
