@@ -31,7 +31,7 @@ API
 QRCode qrcode;
 
 // Allocate a chunk of memory to store the QR code
-uint8_t qrcodeBytes[qrcode_getBufferSize()];
+uint8_t qrcodeBytes[qrcode_getBufferSize(3)];
 
 qrcode_initText(&qrcode, qrcodeBytes, 3, ECC_LOW, "HELLO WORLD");
 ```
@@ -50,7 +50,7 @@ not be scannable, but is just for demonstration purposes).
 ```c
 for (uint8 y = 0; y < qrcode.size; y++) {
     for (uint8 x = 0; x < qrcode.size; x++) {
-        if (qrcode_getModule(&qrcode, x, y) {
+        if (qrcode_getModule(&qrcode, x, y)) {
             Serial.print("**");
         } else {
             Serial.print("  ");
