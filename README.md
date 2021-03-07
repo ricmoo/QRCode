@@ -50,7 +50,7 @@ not be scannable, but is just for demonstration purposes).
 ```c
 for (uint8 y = 0; y < qrcode.size; y++) {
     for (uint8 x = 0; x < qrcode.size; x++) {
-        if (qrcode_getModule(&qrcode, x, y) {
+        if (qrcode_getModule(&qrcode, x, y)) {
             Serial.print("**");
         } else {
             Serial.print("  ");
