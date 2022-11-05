@@ -1,4 +1,4 @@
-QRCode
+QRCodeGenerator
 ======
 
 A simple library for generating [QR codes](https://en.wikipedia.org/wiki/QR_code) in C,
