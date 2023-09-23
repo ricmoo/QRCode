@@ -90,6 +90,8 @@ int8_t qrcode_initBytes(QRCode *qrcode, uint8_t *modules, uint8_t version, uint8
 bool qrcode_getModule(QRCode *qrcode, uint8_t x, uint8_t y);
 
 
+uint8_t findFittingVersion_text(uint8_t ecc, const char *data);
+uint8_t findFittingVersion_bytes(uint8_t ecc, const uint8_t *data, uint16_t length);
 
 #ifdef __cplusplus
 }
